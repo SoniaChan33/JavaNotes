@@ -361,7 +361,7 @@ Git是一个免费的、开源的分布式版本控制系统，可以快速高�
 
 <img src="https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210717114246.png" alt="image-20210717114246916" style="zoom:67%;" />
 
-将本地库数据推送到远程库中
+### 将本地库数据推送到远程库中
 
 ![image-20210717114612323](https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210717114612.png)
 
@@ -381,16 +381,22 @@ Git是一个免费的、开源的分布式版本控制系统，可以快速高�
 
 1. 进入用户的主目录中：
 
+   <img src="C:/Users/Dell/AppData/Roaming/Typora/typora-user-images/image-20210717204258431.png" alt="image-20210717204258431" style="zoom: 67%;" />
+
 2. 执行命令，生成一个.ssh目录
 
-3. 发现
+   <img src="https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210717204402.png" alt="image-20210717204402583" style="zoom: 67%;" />
 
-4. 
+3. 发现.ssh目录下有两个文件
+
+   ![image-20210717204425794](https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210717204425.png)
+
+4. 第二个文件里面的密钥复制，去github下新建密钥
 
    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDBSmguMvizjJA2oH/DhpjB7O70RE270mUTN+DUCJkJ7FUhMdFvoSoME++YXLMguCwiSXmVXefD/8M+sxoSSlhtiK53+EckxLNiOP/sgogg+L2omyNO2GieV4IcP0JaUNR0iPI5satGNGdbV3lmfca2PmNOjSRwDx3aesLnAgii7m1/z4BtlEqhmmcfMdjgchPQp7jwXvHl9OXjJEcAc5GcB0hjXCTYqsGJTSv7DgeGnxCsV+QsxjS+QJinALtGAd+A555IfkLXGpyU/n1WzCzo65CwVi5Sds1Zhy9KD+PHOPTY2bLgB92k/dIHcFWudxAUIffZl1sIG3AdrzN4fPyMFfDcGMAn+BoNALwiD1kOoql0s1mZD2QlKcNNH0BfBqBk64/NkfYdX/8IGywR5N3VgbcxP0qLh/8NOc39XztIRiqjCoApjx1VlqplC8arSNs5zNSsG5Hx/c4L5p1CXNcOYL9L8uHvVpXW4bvyePUedTwW+JeRh6MrivfnUeAxiss= soniachan33@126.com
 
-5. 生成密钥：
+5. 密钥生成：
 
    ![image-20210717144958526](https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210717144958.png)
 
-6. 
+免密操作使每次需要push仓库的时候，都不用再输入密码
