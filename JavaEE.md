@@ -8,33 +8,9 @@
 
 # Tomcat
 
-## 结构
-
-## 部署项目
-
-## 常见配置
-
-## 主要组件
-
 ## HTTP协议
 
 协议：Protocol
-
-应用层
-
-传输层
-
-网络层
-
-数据链路成
-
-
-
-超文本协议
-
-超级文本窗户上西医
-
-
 
 ### 定义
 
@@ -173,6 +149,14 @@ Servlet是可以接受Http请求并作出相应的一种技术,是JAVA语言编�
 Servlet是前后端衔接的一种技术,不是所有的JAVA类都可以接收请求和作出相应,Servlet可以
 
 在MVC模式中,Servlet作为Controller层(控制层)主要技术,用于和浏览器完成数据交互,控制交互逻辑
+
+### ==servlet三大域对象==
+
+**Servlet三大域对象的应用 request、session、application（ServletContext）**
+
+**ServletContext是一个全局的储存信息的空间，服务器开始就存在，服务器关闭才释放。**
+
+**request，一个用户可有多个；session，一个用户一个；而servletContext，所有用户共用一个。所以，为了节省空间，提高效率，ServletContext中，要放必须的、重要的、所有用户需要共享的线程又是安全的一些信息。**
 
 ## 案例1：初步认识
 
@@ -889,7 +873,7 @@ public class MyServlet4 extends HttpServlet {
 
 ## 5. ServletContext和ServletConfig
 
-### ServletContext
+### ServletContext(application)
 
 #### 定义
 
@@ -1571,3 +1555,1574 @@ this is page a1
 3.  ==../==代表向上一层的路径
 
 4. ==base标签==可以简化相对路径,当使用相对路径时,默认会在相对路径之前补充 base中的内容；如果没有定义base 默认就是当前文件所在的路径
+
+
+
+ 
+
+## 11. 会话管理
+
+### 认识Cookie和Session
+
+Cookie对象与HttpSession对象的作用是维护客户端浏览器与服务端的会话状态的两个对象。由于HTTP协议是一个无状态的协议，所以服务端并不会记录当前客户端浏览器的访问状态，但是在有些时候我们是需要服务端能够记录客户端浏览器的访问状态的，如获取当前客户端浏览器的访问服务端的次数时就需要会话状态的维持。在Servlet中提供了Cookie对象与HttpSession对象用于维护客户端与服务端的会话状态的维持。二者不同的是Cookie是通过客户端浏览器实现会话的维持，而HttpSession是通过服务端来实现会话状态的维持。
+
+<img src="https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210805102003.png" alt="image-20210805101816416" style="zoom: 50%;" />
+
+<img src="https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210805102039.png" alt="image-20210805102039111" style="zoom: 50%;" />
+
+### Cookie
+
+Cookie是一种保存少量信息至浏览器的一种技术,第一请求时,服务器可以响应给浏览器一些Cookie信息,第二次请求,浏览器会携带之前的cookie发送给服务器,通过这种机制可以实现在浏览器端保留一些用户信息.为服务端获取用户状态获得依据
+
+#### 特点
+
+- Cookie使用字符串存储数据
+
+- Cookie使用Key与Value结构存储数据
+
+- 单个Cookie存储数据大小限制在4097个字节
+
+- Cookie存储的数据中不支持中文，Servlet4.0中支持
+
+- Cookie是与域名绑定所以不支持跨一级域名访问
+
+- Cookie对象保存在客户端浏览器内存上或系统磁盘中
+
+- Cookie分为持久化Cookie(保存在磁盘上)与状态Cookie(保存在内存上)
+
+- 浏览器在保存同一域名所返回Cookie的数量是有限的。不同浏览器支持的数量不同，Chrome浏览器为50个
+
+- 浏览器每次请求时都会把与当前访问的域名相关的Cookie在请求中提交到服务端。
+
+
+
+#### 创建对象和响应
+
+```java
+Cookie cookie = new Cookie("key","value")
+//通过new关键字创建Cookie对象
+response.addCookie(cookie)
+//通过HttpServletResponse对象将Cookie写回给客户端浏览器。
+```
+
+
+
+
+
+#### 数据的获取
+
+```java
+//通过HttpServletRequest对象获取Cookie，返回Cookie数组。
+Cookie[] cookies = request.getCookies()
+```
+
+
+
+
+
+#### Cookie持久化和状态Cookie
+
+- ==状态Cookie==：浏览器会缓存Cookie对象。浏览器关闭后Cookie对象销毁。
+- ==持久化Cookie==：浏览器会对Cookie做持久化处理，基于文件形式保存在系统的指定目录中。在Windows10系统中为了安全问题不会显示Cookie中的内容。
+
+​       当Cookie对象创建后**默认为状态Cookie**。可以使用Cookie对象下的==cookie.setMaxAge(60)==方法设置失效时间，单位为秒。一旦设置了失效时间，那么该Cookie为持久化Cookie，浏览器会将Cookie对象持久化到磁盘中。当失效时间到达后文件删除。
+
+
+
+#### 测试代码
+
+**通过响应对象 向浏览器响应cookie**
+
+```java
+@WebServlet(urlPatterns = "/servlet1.do")
+public class Servlet1 extends HttpServlet {
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 通过响应对象,向浏览器响应一些Cookie
+        Cookie c1=new Cookie("age","10");// 状态Cookie 重启即清除
+        Cookie c2=new Cookie("gender", "男");//持久化Cookie 让浏览器保留1分钟
+        //c2.setMaxAge(60);// 秒钟    持久化Cookie 让浏览器保留1分钟
+        resp.addCookie(c1);
+        resp.addCookie(c2);
+    }
+}
+```
+
+**获取请求中cookie**
+
+```java
+@WebServlet(urlPatterns = "/servlet2.do")
+public class Servlet2 extends HttpServlet {
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 读取请求中的Cookie
+        Cookie[] cookies = req.getCookies();
+        //cookies不为null
+        if(null != cookies){
+            for (Cookie cookie : cookies) {
+                System.out.println(cookie.getName()+"="+cookie.getValue());
+            }
+        }
+    }
+}
+```
+
+#### 案例：通过Cookie判断用户是否访问过当前Servlet
+
+需求：
+
+​                                                                                                                                                                                      当客户端浏览器第一次访问Servlet时返回“您好，欢迎您第一次访问！”，第二次访问时返回“欢迎您回来！”
+
+```java
+@WebServlet(urlPatterns = "/servlet3.do")
+public class Servlet3 extends HttpServlet {
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 如果是第一访问当前Servlet.向浏览器响应一个cookie ("servlet3","1")
+        // 如果是多次访问,就再次数上+1
+        Cookie[] cookies = req.getCookies();
+        boolean  flag =false ;
+        if(null !=cookies){
+            for (Cookie cookie : cookies) {
+                String cookieName = cookie.getName();
+                if(cookieName.equals("servlet3")){
+                    // 创建Cookie次数+1
+                    Integer value = Integer.parseInt(cookie.getValue())+1;
+                    Cookie c=new Cookie("servlet3", String.valueOf(value));
+                    resp.addCookie(c);
+                    System.out.println("欢迎您第"+value+"访问");
+                    flag=true;
+                }
+            }
+        }
+        if(!flag){
+            System.out.println("欢迎您第一次访问");
+            Cookie c=new Cookie("servlet3", "1");
+            resp.addCookie(c);
+        }
+    }
+}
+```
+
+
+
+### Session
+
+
+
+### 案例:判断用户是否登录
+
+#### 需求:
+
+实现登录一次即可,在一次会话内,可以反复多次访问WEB-INF/ welcome.html,如果没有登录过,跳转到登录页,登录成功后,可以访问
+
+#### 项目结构:
+
+<img src="https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210805142941.png" alt="image-20210805142907533" style="zoom:67%;" />
+
+#### 组件介绍：
+
+##### login.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form method="get" action="loginServlet.do">
+    用户名:<input type="text" name="username" ><br/>
+    密码:<input type="password" name="password" ><br/>
+    <input type="submit" >
+</form>
+</body>
+</html>
+```
+
+
+
+##### main.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+   this is main page
+</body>
+</html>
+```
+
+
+
+##### LoginServlet
+
+用来校验登录的，登陆成功将用户信息存户HttpSession，否则返回到登录页。
+
+```java
+@WebServlet(urlPatterns = "/loginServlet.do")
+public class LoginServlet extends HttpServlet {
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 获取用户名和密码
+        String username = req.getParameter("username");
+        String password = req.getParameter("password");
+        // 如果用户名和密码为 msb 1234
+        if("msb".equals(username)  && "1234".equals(password)){
+            // 将用户信息放在HTTPSession中
+            User user =new User(null, null, "msb", "1234");
+            HttpSession session = req.getSession();
+            session.setAttribute("user", user);
+            // 登录成功 跳转至 main.html
+            resp.sendRedirect(req.getContextPath()+"/mainServlet.do");
+        }else{
+            // 登录失败 回到login.html
+            resp.sendRedirect(req.getContextPath()+"/login.html");
+        }
+    }
+}
+
+```
+
+
+
+##### MainServlet
+
+用来向mian.html中跳转的，同时验证登录的，可以直接跳转，否则回到登录页。
+
+```java
+
+@WebServlet(urlPatterns = "/mainServlet.do")
+public class MainServlet extends HttpServlet {
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //跳转至main.html
+        HttpSession session = req.getSession();
+        User user = (User)session.getAttribute("user");
+        if(null != user){
+            // 判断如果登录过 允许跳转  HTTPSession中如果有登陆过的信息
+            req.getRequestDispatcher("/WEB-INF/main.html").forward(req,resp);
+        }else{
+            // 如果没有登录过 回到登录去登录  HTTPSession中如果有登陆过的信息
+            resp.sendRedirect("login.html");
+        }
+    }
+}
+
+```
+
+
+
+##### User
+
+存储用户信息的实体类
+
+```java
+public class User implements Serializable {
+    private Integer uid;
+    private String realname;
+    private String username;
+    private String pasword;
+```
+
+
+
+
+
+# JSP
+
+
+
+## 指令标签
+
+三种指令标签
+
+| 指令           | 描述                                                |
+| -------------- | --------------------------------------------------- |
+| <%@ page %>    | 定义网页依赖属性，如脚本语言，error页面、缓存需求等 |
+| <%@ include %> | 包含其他文件                                        |
+| <%@ taglib%    | 引入标签库的定义                                    |
+
+### page标签
+
+```java
+<%--告知浏览器以什么格式和编码解析 响应的数据--%>
+
+    <%@ page contentType="text/html;charset=UTF-8"  %>
+
+    <%--设置JSP页面转换的语言--%>
+
+    <%@ page language="java"%>
+
+    <%--导包--%>
+
+    <%@ page import="com.msb.entity.User" %>
+
+    <%--在转换成java代码时使用的编码 一般不用设置--%>
+
+    <%@ page pageEncoding="UTF-8" %>
+
+    <%--指定错误页 当页面发生错误时 指定跳转的页面--%>
+
+    <%@ page errorPage="error500.JSP" %>
+    <%--指定当前页为异常提示页 当前页面可以接收异常对象 --%>
+
+    <%@page isErrorPage="true" %>
+```
+
+
+
+errorPage是一种处理错误提示也的功能除了JSP有的错误提示页功能
+
+javaEE中自带其他的错位提示页处理功能，具体配置如下
+
+```xml
+<error-page>
+
+    <error-code>500</error-code>
+
+    <location>/error500.JSP</location>
+
+</error-page>
+
+
+
+<error-page>
+
+    <error-code>404</error-code>
+
+    <location>/error404.JSP</location>
+
+</error-page>
+```
+
+当JSP中发生了异常时,如果JSP中配置的错误页和web.xml 中配置的错误页冲突了,JSP page指令的 errorPage优先级更高
+
+<img src="https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210807110128.png" alt="image-20210807110126899" style="zoom:67%;" />
+
+
+
+### include标签
+
+JSP可以通过Include指令来包含其他文件。被包含的文件可以是JSP文件、HTML文件或文本文件。包含的文件就好像是该JSP文件的一部分，会被同时编译执行。除了include指令标签可以实现引入以外，使用jsp:include也可以实现引入
+
+```jsp
+
+<%--静态引入使用的是 include 指令标签
+
+    被引入的JSP页面不会生成java代码 被引入的网页和当前页生成代码后形成了一个java文件--%>
+
+<%@include file="head.JSP"%>
+
+<%--动态引入 JSP标签中的 include选项
+
+    被引入的JSP页面会生成独立的java代码 
+
+    在生成的java代码中 使用JSPRuntimeLibrary.include(request, response, "head.JSP", out, false);引入其他页面
+
+    --%>
+
+<jsp:include page="head.JSP"/>
+```
+
+查看转译以后的java源代码文件中的区别
+
+静态引入：@include被引入的网页和当前页生成代码后形成了一个java文件
+
+动态引入：jsp:include被引入的JSP页面会生成独立的java代码
+
+### taglib指令标签
+
+JSP API允许用户自定义标签，一个自定义标签库就是自定义标签的集合。Taglib指令引入一个自定义标签集合的定义，包括库路径、自定义标签。
+
+语法：
+
+```jsp
+<%@ taglib   uri="uri" prefix="prefixOfTag" %>
+```
+
+
+
+## 内置对象
+
+### 九大对象
+
+**四大域对象**
+
+- pageContext  page域     当前页面内可用
+
+- request       reqeust域  单次请求
+
+- session       session域   单次会话
+
+- application   application 域项目运行
+
+**响应对象**
+
+- response 
+
+**输出流对象**
+
+- out 打印流
+
+**其他三个对象**
+
+- servletConfig:由于JSP本身也是一个Servlet,所以容器也会给我们准备一个ServletConfig
+
+- page        就是他this对象 当前JSP对象本身  
+
+- exception   异常对象,在错误提示页上使用,当isErrorpage=true 才具有该对象
+
+## 案例一：在浏览器上访问Emp表 动态地分等级
+
+EmpDaoImpl.java
+
+实现类
+
+```java
+public class EmpDaoImpl implements EmpDao {
+    private String url="jdbc:mysql://127.0.0.1:3306/mydb?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai";
+    private String username="root";
+    private String password="root";
+    @Override
+    public List<Emp> findAll() {
+        List<Emp> list =new ArrayList<>();
+        Connection connection =null;
+        PreparedStatement pstat=null;
+        ResultSet resultSet=null;
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(url, username, password);
+            pstat = connection.prepareStatement("select * from emp");
+            resultSet = pstat.executeQuery();
+            while(resultSet.next()){
+                Integer empno=resultSet.getInt("empno");
+                Integer deptno=resultSet.getInt("deptno");
+                Integer mgr=resultSet.getInt("mgr");
+                String ename=resultSet.getString("ename");
+                String job=resultSet.getString("job");
+                Double sal=resultSet.getDouble("sal");
+                Double comm=resultSet.getDouble("comm");
+                Date hiredate=resultSet.getDate("hiredate");
+                Emp emp =new Emp( empno,  ename,  job,  mgr,  hiredate,  sal,  comm,  deptno);
+                list.add(emp);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            if(null!=resultSet){
+                try {
+                    resultSet.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(null!=pstat){
+                try {
+                    pstat.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if(null!=connection){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return list;
+    }
+}
+
+```
+
+Emp.java
+
+```java
+public interface EmpDao {
+    List<Emp> findAll();
+}
+```
+
+
+
+EmpServlet
+
+```java
+@WebServlet("/empServlet.do")
+public class EmpServlet extends HttpServlet {
+    // dao对象
+    EmpDao empDao=new EmpDaoImpl();
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 获取数据
+        List<Emp> list = empDao.findAll();
+        // 将数据放入请求域
+        req.setAttribute("emps", list);
+        // 请求转发给JSP
+        req.getRequestDispatcher("showEmp.jsp").forward(req,resp);
+    }
+}
+```
+
+showEmp.jsp
+
+```jsp
+<%@ page import="java.util.List" %>
+<%@ page import="com.msb.pojo.Emp" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+    <style>
+        table{
+            border: 3px solid blue;
+            width: 80%;
+            margin: 0px auto;
+        }
+        td,th{
+            border: 2px solid green;
+        }
+    </style>
+</head>
+<body>
+    <table cellspacing="0px" cellpadding="0px">
+        <tr>
+            <th>编号</th>
+            <th>姓名</th>
+            <th>上级编号</th>
+            <th>职务</th>
+            <th>入职日期</th>
+            <th>薪资</th>
+            <th>补助</th>
+            <th>部门号</th>
+            <th>薪资等级</th>
+        </tr>
+        <%
+            List<Emp> emps = (List<Emp>) request.getAttribute("emps");
+            for (Emp emp : emps) {
+        %>
+            <tr>
+                <td><%=emp.getEmpno()%></td>
+                <td><%=emp.getEname()%></td>
+                <td><%=emp.getMgr()%></td>
+                <td><%=emp.getJob()%></td>
+                <td><%=emp.getHiredate()%></td>
+                <td><%=emp.getSal()%></td>
+                <td><%=emp.getComm()%></td>
+                <td><%=emp.getDeptno()%></td>
+                <td><%--out.print("<td>")--%>
+         <%
+             Double sal = emp.getSal();
+             if(sal<=500){
+                 out.print("A");
+             }else if( sal <=1000){
+                 out.print("B");
+             }else if( sal <=1500){
+                 out.print("C");
+             }else if( sal <=2000){
+                 out.print("D");
+             }else if( sal <=3000){
+                 out.print("E");
+             }else if( sal <=4000){
+                 out.print("F");
+             }else {
+                 out.print("G");
+             }
+         %>
+                </td>
+            </tr>
+        <%
+            }
+        %>
+    </table>
+</body>
+</html>
+```
+
+
+
+## EL表达式
+
+Expression Languaga
+
+EL表达式中定义了一些可以帮助我们快捷从域对象中取出数据的写法,**基本语法为**
+
+```jsp
+${域标志.数据名.属性名(可选)}
+```
+
+**四个域标志关键字分别为**
+
+- requestScope         request域
+
+- sessionScope          session域
+
+- applicationScope   application域
+
+- pageScope             page域
+
+### EL表达式快捷取出域对象
+
+- requestScope         request域
+
+- sessionScope          session域
+
+- applicationScope   application域
+
+- pageScope             page域
+
+```jsp
+<%@ page import="com.msb.pojo.User" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+    <head>
+        <title>Title</title>
+    </head>
+    <body>
+        <%--向pageContext域中放数据--%>
+        <%
+        pageContext.setAttribute("msg", "pageContextMessage");
+        pageContext.setAttribute("userx", new User(1,"大黄","abcdefg"));
+        %>
+        <%--
+    从域中取出数据
+    El表达式在获取对象属性值得时候,是通过对象的属性的get方法获取的
+    保证对象的要获取的属性必须有对应get方法才可以
+    EL表达式在使用时是不需要import其他类的
+    El如果获取的是NULL值,是不展示任何信息的
+    --%>
+        pageContext域中的数据:<br/>
+        msg:${pageScope.msg}<br/>
+        username:${pageScope.userx.name}<br/>
+        <hr/>
+        request域中的数据:<br/>
+        msg:${requestScope.msg}<br/>
+        username:${requestScope.user.name}<br/>
+        <hr/>
+        session域中的数据:<br/>
+        msg:${sessionScope.msg}<br/>
+        username:${sessionScope.users[1].name}<br/>
+        <hr/>
+        application域中的数据:<br/>
+        msg:${applicationScope.msg}<br/>
+        username:${applicationScope.userMap.a.name}<br/>
+        <hr/>
+        <%--EL表达式在取出数据的时候是可以省略域标志的
+    EL表达式会自动依次到四个域中去找数据
+    --%>
+        PageContext username:${userx.name}<br/>
+        Request username:${user.name}<br/>
+        Session username:${users[1].name}<br/>
+        Application username:${userMap.a.name}<br/>
+        <hr/>
+        <%--
+    ${数据的名字}如果省略域标志,取数据的顺序如下
+    pageContext
+    request
+    session
+    application
+    --%>
+        ${msg}
+        <hr/>
+        <%--
+    移除域中的数据
+    --%>
+        <%
+        //pageContext.removeAttribute("msg");// pageContext.removeAttribute()方法会移除四个域中的所有的同名的数据
+        //request.removeAttribute("msg");
+        %>
+        pagecontextMsg:${pageScope.msg}<br/>
+        requestMsg:${requestScope.msg}<br/>
+        sessionMsg:${sessionScope.msg}<br/>
+        applicationMsg:${applicationScope.msg}<br/>
+        <hr/>
+        <%--
+    EL表达式获取请求中的参数
+    --%>
+        username:${param.username}<br/>
+        hobby:${paramValues.hobby[0]}
+        hobby:${paramValues.hobby[1]}
+    </body>
+</html>
+
+```
+
+
+
+#### 总结
+
+- EL表达式定义在JSP页面上,在转译之后的java文件中,会被转化成java代码
+
+- EL表达式是一种后台技术,服务器上运行,不是在浏览器上运行,不能用于HTML页面
+
+- EL表达式底层是通过反射实现的,在获取对象属性值时是通过对象的get方法实现的
+
+  
+
+### EL表达式运算符
+
+#### 运算符
+
+**算数运算符**: + - * / %
+
+**比较运算符:** 
+
+==  eq equals
+
+&gt;gt greater then
+
+<     lt   lower then
+
+&gt;=  ge  greater then or equals
+
+<=  le   lower then or equals
+
+!=   ne   not equals
+
+**逻辑运算符**: || or    && and 
+
+**三目运算符**: ${条件 ?表达式1 : 表达式2}
+
+**判空运算符**: empty
+
+#### 使用
+
+```jsp
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+<%--
++两端如果有字符串,会尝试将字符串转换成数字之后进行加法运算
+/如果除以0 结果为Infinity 而不是出现异常
+%如果和0取余数,那么会出现异常
+--%>
+    算数运算符：
+    <hr/>
+    ${10 + 10}<br/>
+    ${"10" + 10}<br/>
+    ${"10" + "10"}<br/>
+    <%--${"10a" + 10}<br/>--%>
+    ${10/0}<br/>
+    <%-- ${10%0}<br/>--%>
+    关系运算符/比较运算符
+    <%--
+    比较运算符推荐写成字母形式,不推荐使用 == >=  <=
+    --%>
+    <hr/>
+    ${10 == 10}<br/>
+    ${10 eq 10}<br/>
+    ${10 gt 8}<br/>
+    逻辑运算符
+    <hr/>
+    ${ true || false}<br/>
+    ${ true or false}<br/>
+    ${ true && false}<br/>
+    ${ true and false}<br/>
+    条件运算符/三目运算符
+    <hr/>
+    ${(100-1)%3==0?10+1:10-1}<br/>
+    判断空运算符
+    <%--empty 为null 则为true--%>
+    <%  //向域中放入数据
+        pageContext.setAttribute("a",null);
+        pageContext.setAttribute("b","");
+        int[] arr ={};
+        pageContext.setAttribute("arr",arr);
+        List list =new ArrayList();
+        pageContext.setAttribute("list",list);
+    %>
+    <hr/>
+    ${empty a}<br/>
+    ${empty b}<br/><%--字符串长度为0 则认为是空--%>
+    ${empty arr}<br/><%--数组长度为0 认为不是空--%>
+    ${empty list}<br/><%--集合长度为0 认为是空--%>
+    ${list.size() eq 0}<br/><%--集合长度为0 认为是空--%>
+</body>
+</html>
+```
+
+
+
+## 案例一优化：使用EL表达式优化查询员工信息的页面处理
+
+```jsp
+<%@ page import="java.util.List" %>
+<%@ page import="com.msb.pojo.Emp" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+    <head>
+        <title>Title</title>
+        <style>
+            table{
+                border: 3px solid blue;
+                width: 80%;
+                margin: 0px auto;
+            }
+            td,th{
+                border: 2px solid green;
+            }
+        </style>
+    </head>
+    <body>
+        <table cellspacing="0px" cellpadding="0px">
+            <tr>
+                <th>编号</th>
+                <th>姓名</th>
+                <th>上级编号</th>
+                <th>职务</th>
+                <th>入职日期</th>
+                <th>薪资</th>
+                <th>补助</th>
+                <th>部门号</th>
+                <th>薪资等级</th>
+            </tr>
+            <%
+            List<Emp> emps = (List<Emp>) request.getAttribute("emps");
+            for (Emp emp : emps) {
+                pageContext.setAttribute("emp", emp);//将员工对象放入PageContext 域
+                %>
+            <tr>
+                <td>${emp.empno}</td>
+                <td>${emp.ename}</td>
+                <td>${emp.mgr}</td>
+                <td>${emp.job}</td>
+                <td>${emp.hiredate}</td>
+                <td>${emp.sal}</td>
+                <td>${emp.comm}</td>
+                <td>${emp.deptno}</td>
+                <td>
+                    ${emp.sal le 500?"A":""}
+                    ${emp.sal gt 500 and emp.sal le 1000?"B":""}
+                    ${emp.sal gt 1000 and emp.sal le 1500?"C":""}
+                    ${emp.sal gt 1500 and emp.sal le 2000?"D":""}
+                    ${emp.sal gt 2000 and emp.sal le 3000?"E":""}
+                    ${emp.sal gt 3000 and emp.sal le 4000?"F":""}
+                    ${emp.sal gt 4000?"G":""}
+                </td>
+            </tr>
+            <%
+            }
+            %>
+        </table>
+    </body>
+</html>
+
+```
+
+## JTSL
+
+JSTL（Java server pages standarded tag library，即JSP标准标签库）是由JCP（Java community Proces）所制定的标准规范，它主要提供给Java Web开发人员一个标准通用的标签库，并由Apache的Jakarta小组来维护。
+
+**使用前提**
+
+1. 需要导包 
+
+2. 页面中通过taglib指令引入标签库
+
+   ```jsp
+   <%@   taglib uri="标签库的定位" prefix="前缀(简称)" %>
+   ```
+
+   uri可以在对应的tld文件中找到
+
+### 核心标签库
+
+导入语句为
+
+```jsp
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+```
+
+#### 操作对象的标签c:set/out/remove
+
+- ==&lt;c:set>==         向域对象中放入数据  setAttribute
+- ==&lt;c:out>==        从域对象中取出数据  getAttribute
+- ==&lt;c:remove>== 从域对象中移除数据   removeAttribute
+
+```jsp
+<%--
+    c:set
+        scope 指定放数据的域 可选值 page request session application
+        var   数据的名称
+        value 数据
+    --%>
+    <c:set scope="page" var="msg" value="pageMessage"></c:set>
+    <c:set scope="request" var="msg" value="requestMessage"></c:set>
+    <c:set scope="session" var="msg" value="sessionMessage"></c:set>
+    <c:set scope="application" var="msg" value="applicationMessage"></c:set>
+    <%--移除指定域中的值--%>
+   <%-- <c:remove var="msg" scope="page"></c:remove>
+    <c:remove var="msg" scope="request"></c:remove>--%>
+    <c:remove var="msg" scope="session"></c:remove>
+    <c:remove var="msg" scope="application"></c:remove>
+    <%--通过EL表达式取出域中的值--%>
+    <hr/>
+    ${pageScope.msg}<br/>
+    ${requestScope.msg}<br/>
+    ${sessionScope.msg}<br/>
+    ${applicationScope.msg }<br/>
+    <hr/>
+
+
+    <%--通过c:out标签获取域中的值--%>
+    <c:out value="${pageScope.msg}" default="page msg not found"/>
+    <c:out value="${requestScope.msg}" default="request msg not found"/>
+    <c:out value="${sessionScope.msg}" default="session msg not found"/>
+    <c:out value="${applicationScope.msg}" default="application msg not found"/>
+</body>
+</html>
+
+```
+
+#### 多条件分支标签c:if和c:choose
+
+```jsp
+<%--
+    随机生成一个分数  0-100
+    >=90 A
+    >=80 B
+    >=70 C
+    >=60 D
+    <60  E
+    --%>
+    <%
+        int score =new Random().nextInt(101);
+        pageContext.setAttribute("score", score);
+    %>
+    <%--
+    test  判断条件
+    c:if可以将test的结果放入指定的域中
+    scope 指定存放的域
+    var   数据名
+    --%>
+    分数:${score}<br/> 等级:
+    <c:if test="${score ge 90}" scope="page" var="f1">A</c:if>
+    <c:if test="${score ge 80 and score lt 90}" scope="page" var="f2">B</c:if>
+    <c:if test="${score ge 70 and score lt 80}" scope="page" var="f3">C</c:if>
+    <c:if test="${score ge 60 and score lt 70}" scope="page" var="f4">D</c:if>
+    <c:if test="${score lt 60}" scope="page" var="f5">E</c:if>
+    <hr/>
+    ${f1}
+    ${f2}
+    ${f3}
+    ${f4}
+    ${f5}
+    <hr/>
+    <%--输出分数是否及格--%>
+    <c:if test="${score ge 60}" scope="page" var="flag">及格</c:if>
+    <c:if test="${!pageScope.flag}">不及格</c:if>
+    <hr/>
+    <c:choose>
+        <c:when test="${score ge 90}">A</c:when>
+        <c:when test="${score ge 80}">B</c:when>
+        <c:when test="${score ge 70}">C</c:when>
+        <c:when test="${score ge 60}">D</c:when>
+        <c:otherwise>E</c:otherwise>
+    </c:choose>
+```
+
+#### 迭代标签c:foreach
+
+##### 打印乘法表
+
+c:forEach中的**属性**
+
+- ==var==: 迭代变量, 存放在pageContext作用域
+- ==begin==: 迭代起始值
+- ==end==: 迭代结束值
+- ==step==: 迭代变量变化的步长
+
+```jsp
+<%--
+    for ( int i =1;i<=9 ;i+=2){
+        pageContext.setAttribute("i",i)
+    }
+c:foreach 每次执时都会向page域中放入一个名为 i 值为当前值这样的一个操作
+    --%>
+<c:forEach var="i" begin="1" end="9" step="1">
+    <c:forEach var="j" begin="1" end="${i}" step="1">
+        ${j} * ${i} = ${i*j} &nbsp;
+    </c:forEach>
+    <br/>
+</c:forEach>
+```
+
+##### 遍历对象数组
+
+- ==items==: 要遍历的集合, 需要使用EL表达式取值
+- ==varStatus==: 迭代变量的状态
+- ==index:== 索引, 从0开始
+- ==count:== 计数, 从1开始
+- ==first==: boolean, 表示是否是第一个
+- ==last==: boolean, 表示是否是最后一个
+- ==current==: 对象, 当前迭代的对象值
+
+
+
+```jsp
+ <%--<%//原来的遍历
+        List<Emp> emps = (List<Emp>) request.getAttribute("emps");
+        for (Emp emp : emps) {
+            pageContext.setAttribute("emp", emp);//将员工对象放入PageContext 域
+        %>
+        c:foreach
+        --%>
+        <c:forEach items="${emps}" var="emp" varStatus="empStatus">
+```
+
+
+
+### 格式化标签库fmt
+
+#### 导入标签
+
+```jsp
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+```
+
+#### &lt;fmt:formatDate>日期格式标签
+
+```jsp
+<td>
+    <fmt:formatDate value="${emp.hiredate}" pattern="yyyy年MM月dd日 HH:mm:ss"/>
+</td>
+```
+
+#### 数字格式化标签
+
+```jsp
+<td>
+    <%--
+    0 代表必须有一位数字,如果对应的位置没有值怎么办?自动补充0
+    # 代表有一位数字,开头和结尾的所有的0不保留
+    --%>
+    &yen;<fmt:formatNumber value="${emp.sal}" pattern="###,##0.00"/>
+</td>
+```
+
+
+
+## showEmp.js页面最终优化
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<html>
+    <head>
+        <title>Title</title>
+        <style>
+            table{
+                border: 3px solid blue;
+                width: 80%;
+                margin: 0px auto;
+            }
+            td,th{
+                border: 2px solid green;
+            }
+        </style>
+    </head>
+    <body>
+        <table cellspacing="0px" cellpadding="0px">
+            <tr>
+                <th>序号</th>
+                <th>索引</th>
+                <th>isFirst</th>
+                <th>isLast</th>
+                <th>编号</th>
+                <th>姓名</th>
+                <th>姓名</th>
+                <th>上级编号</th>
+                <th>职务</th>
+                <th>入职日期</th>
+                <th>薪资</th>
+                <th>补助</th>
+                <th>部门号</th>
+                <th>薪资等级</th>
+            </tr>
+            <%-- <%
+    List<Emp> emps = (List<Emp>) request.getAttribute("emps");
+            for (Emp emp : emps) {
+                pageContext.setAttribute("emp",emp);//将员工对象放入PageContext域
+                %>
+            c:foreach
+            items 要遍历的数组/List  可以通过EL表达式取出集合之后给改属性赋值
+            var   中间变量的名称
+            varStatus 记录每一个对象状态的设置
+            count 个数
+            index 索引
+            first 如果当前元素是迭代的第一个元素 true 否则为false
+            last  如果当前元素是迭代的最后一个元素 true 否则为false
+            current 当前迭代的元素本身
+            --%>
+            <c:forEach items="${emps}" var="emp" varStatus="empStatus">
+                <tr>
+                    <%--使用EL表达式来取出域对象里的对象属性值--%>
+                    <%-- <td><%=emp.getEmpno()%></td>
+            <td><%=emp.getEname()%></td>
+            <td><%=emp.getMgr()%></td>
+            <td><%=emp.getJob()%></td>
+            <td><%=emp.getHiredate()%></td>
+            <td><%=emp.getSal()%></td>
+            <td><%=emp.getComm()%></td>
+            <td><%=emp.getDeptno()%></td>--%>
+            <td>${empStatus.count}</td>
+            <td>${empStatus.index}</td>
+            <td>${empStatus.first}</td>
+            <td>${empStatus.last}</td>
+            <td>${emp.empno}</td>
+            <td>${emp.ename}</td>
+            <td>${empStatus.current.ename}</td>
+            <td>${emp.mgr}</td>
+            <td>${emp.job}</td>
+            <td>
+                <fmt:formatDate value="${emp.hiredate}" pattern="yyyy年MM月dd日 HH:mm:ss"/>
+            </td>
+            <td>
+                <%--
+    0 代表必须有一位数字,如果对应的位置没有值怎么办?自动补充0
+    # 代表有一位数字,开头和结尾的所有的0不保留
+    --%>
+
+                &yen;<fmt:formatNumber value="${emp.sal}" pattern="###,##0.00"/>
+            </td>
+            <td>${emp.comm}</td>
+            <td>${emp.deptno}</td>
+            <td><%--out.print("<td>")--%>
+                <%--<%
+    	Double sal = emp.getSal();
+                if(sal<=500){
+                    out.print("A");
+                }else if( sal <=1000){
+                    out.print("B");
+                }else if( sal <=1500){
+                    out.print("C");
+                }else if( sal <=2000){
+                    out.print("D");
+                }else if( sal <=3000){
+                    out.print("E");
+                }else if( sal <=4000){
+                    out.print("F");
+                }else {
+                    out.print("G");
+                }
+                %>--%>
+                <%--使用EL算数表达式来判断等级
+    ${emp.sal le 500?"A":""}
+                ${emp.sal gt 500 and emp.sal le 1000?"B":""}
+                ${emp.sal gt 1000 and emp.sal le 1500?"C":""}
+                ${emp.sal gt 1500 and emp.sal le 2000?"D":""}
+                ${emp.sal gt 2000 and emp.sal le 3000?"E":""}
+                ${emp.sal gt 3000 and emp.sal le 4000?"F":""}
+                ${emp.sal gt 4000?"G":""}--%>
+
+                <%--使用JSTL标签--%>
+                <c:choose>
+                    <c:when test="${emp.sal le 500}">A</c:when>
+                    <c:when test="${emp.sal le 1000}">B</c:when>
+                    <c:when test="${emp.sal le 1500}">C</c:when>
+                    <c:when test="${emp.sal le 2000}">D</c:when>
+                    <c:when test="${emp.sal le 3000}">E</c:when>
+                    <c:when test="${emp.sal le 4000}">F</c:when>
+                    <c:when test="${emp.sal gt 4000}">G</c:when>
+                </c:choose>
+            </td>
+            </tr>
+        </c:forEach>
+    </table>
+</body>
+</html>
+
+```
+
+
+
+# Filter
+
+## 案例：通过过滤验证登录
+
+需求：通过过滤器控制，只有登陆之后可以反复进入welcome.jsp欢迎页，如果没有登录，提示用户进入登录页进行登陆操作。
+
+<img src="https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210808090141.png" alt="image-20210808090117141" style="zoom:50%;" />
+
+###### login.jsp
+
+```jsp
+
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+  <head>
+    <title>$Title%sSourceCode%lt;/title>
+  </head>
+  <body>
+  <img src="static/img/logo.png">
+  please login ... ... <br/>
+  <form action="loginController.do" method="post">
+    用户名:<input type="text" name="user"> <br/>
+    密码:<input type="password" name="pwd"><br/>
+    <input type="submit" value="提交">
+  </form>
+  </body>
+</html>
+
+```
+
+
+
+###### welcome.jsp
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+<img src="static/img/logo.png">
+欢迎${user.username}登陆!!!
+</body>
+</html>
+
+```
+
+###### aaa.jsp
+
+```jsp
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Title</title>
+</head>
+<body>
+this is page aaa
+</body>
+</html>
+```
+
+准备Controller代码
+
+```java
+@WebServlet(urlPatterns = "/loginController.do")
+public class LoginController extends HttpServlet {
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 获取用户名和密码
+        String username = req.getParameter("user");
+        String password = req.getParameter("pwd");
+        System.out.println(username);
+        System.out.println(password);
+        // 链接数据库校验登录
+        // 登录成功,将用户信息放入Session域
+        User user =new User(username,password);
+        req.getSession().setAttribute("user", user);
+        // 跳转到欢迎页
+        resp.sendRedirect("welcome.jsp");
+    }
+}
+
+```
+
+准备登录控制过滤器
+
+```java
+@WebFilter(urlPatterns = "/*")// 任何资源都要进行过滤,
+public class Filter1_LoginFilter  implements Filter {
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        HttpServletRequest req=(HttpServletRequest)servletRequest;
+        HttpServletResponse resp=(HttpServletResponse) servletResponse;
+        //无论是否登录过,都要放行的资源   登录页  登录校验Controller 和一些静态资源
+        String requestURI = req.getRequestURI();
+        System.out.println(requestURI);
+        if(requestURI.contains("login.jsp")|| requestURI.contains("loginController.do")|| requestURI.contains("/static/")){
+            // 直接放行
+            filterChain.doFilter(req,resp);
+            // 后续代码不再执行
+            return;
+        }
+        // 需要登录之后才能访问的资源,如果没登录,重定向到login.jsp上,提示用户进行登录
+        HttpSession session = req.getSession();
+        Object user = session.getAttribute("user");
+        if(null != user){// 如果登录过 放行
+            filterChain.doFilter(req,resp);
+        }else{// 没有登录过,跳转至登录页
+            resp.sendRedirect("login.jsp");
+        }
+    }
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+    }
+    @Override
+    public void destroy() {
+    }
+}
+
+```
+
+
+
+# Listener
+
+
+
+## 案例：记录请求日志
+
+###### RequestLoginListener.java
+
+```java
+@WebListener
+public class RequestLogListener implements ServletRequestListener {
+    private SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    @Override
+    public void requestDestroyed(ServletRequestEvent sre) {
+    }
+    @Override
+    public void requestInitialized(ServletRequestEvent sre) {
+        // 获得请求发出的IP
+        // 获得请求的URL
+        // 获得请求产生的时间
+        HttpServletRequest request = (HttpServletRequest)sre.getServletRequest();
+        String remoteHost = request.getRemoteHost();
+        String requestURL = request.getRequestURL().toString();
+        String reqquestDate = simpleDateFormat.format(new Date());
+        // 准备输出流
+        try {
+            PrintWriter pw =new PrintWriter(new FileOutputStream(new File("d:/msb.txt"),true));
+            pw.println(remoteHost+" "+requestURL+" "+reqquestDate );
+            pw.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+```
+
+
+
+## 案例：显示在线人数
+
+**需求**：开启一次会话session 在线人数加一 销毁会话以后在线人数减一
+
+使用count来计数，然后**存在application域中**
+
+###### OnlineNumberListener:
+
+获取application域对象，存入数据count，如果一次session开启，++count；一次session关闭，--count
+
+```java
+@WebListener
+public class OnlineNumberListener implements HttpSessionListener {
+    @Override
+    public void sessionCreated(HttpSessionEvent se) {
+        //向application域中增加一个数字
+        HttpSession session = se.getSession();
+        ServletContext application = session.getServletContext();
+        Object count = application.getAttribute("count");
+        if (null == count) {
+            //第一次放入数据
+            application.setAttribute("count",1);
+        }else{
+            int c = (int) count;
+            application.setAttribute("count", ++c);
+        }
+    }
+
+    @Override
+    public void sessionDestroyed(HttpSessionEvent se) {
+        //向application域中减少一个数字
+        HttpSession session = se.getSession();
+        ServletContext application = session.getServletContext();
+        Object count = application.getAttribute("count");
+        int count1 = (int) count;
+        application.setAttribute("count",--count1);
+
+    }
+}
+
+```
+
+## 案例：重启免登录
+
+### Session序列化和反序列化
+
+1、序列化与反序列
+
+把对象转化为字节序列的过程称为序列化（保存到硬盘，持久化）
+
+把字节序列转化为对象的过程称为反序列化（存放于内存）
+
+ 2、序列化的用途
+
+把对象的字节序列永久保存到硬盘上，通常放到一个文件中。
+
+把网络传输的对象通过字节序列化，方便传输本节作业
+
+3、实现步骤
+
+想实现序列化和反序列化需要手动配置
+
+![image-20210808154350410](https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210808154352.png)
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Context>
+
+    <Manager className="org.apache.catalina.session.PersistentManager">
+
+        <Store className="org.apache.catalina.session.FileStore" directory="d:/session"/>
+
+    </Manager>
+
+</Context>
+```
+
+==注意实体类必须实现serializable 接口==
+
+### 开发过程
+
+#### 1 准备实体类
+
+```java
+
+public class User  implements Serializable {
+    private String username;
+    private String pwd;
+}
+```
+
+
+
+#### 2 开发登录信息输入页面
+
+```jsp
+  <form action="loginController.do" method="post">
+    用户名:<input type="text" name="user"> <br/>
+    密码:<input type="password" name="pwd"><br/>
+    <input type="submit" value="提交">
+  </form>
+```
+
+
+
+#### 3开发登录信息验证Servlet
+
+```java
+@WebServlet("/loginController.do")
+public class LoginController extends HttpServlet {
+@Override
+protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    String username = req.getParameter("user");
+    String pwd = req.getParameter("pwd");
+    // user
+    User user =new User(username,pwd);
+    // session
+    HttpSession session = req.getSession();
+    session.setAttribute("user", user);
+}
+}
+```
+
+
+
+#### 4 开发校验当前是否已经登录的Controller
+
+loginCheckController.java
+
+```java
+
+@WebServlet(urlPatterns = "/loginCheckController.do")
+public class LoginCheckController extends HttpServlet {
+@Override
+protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    // 判断是否登录
+    HttpSession session = req.getSession();
+    Object user = session.getAttribute("user");
+    Object listener = session.getAttribute("listener");// 获得对应的监听器
+    String message ="";
+    if(null != user){
+        message="您已经登录过";
+    }else{
+        message="您还未登录";
+    }
+    resp.setCharacterEncoding("UTF-8");
+    resp.setContentType("text/html;charset=UTF-8");
+    resp.getWriter().println(message);
+}
+}
+```
+
+
+
+
+
+
+#### 5  测试
+
+先登录,然后请求loginCheckController.do 校验是否登录过,然后重启项目,再起请求loginCheckController.do 校验是否登录过,发现重启后,仍然是登录过的
+
+#### 6 监听钝化和活化
+
+**MySessionActivationListener.java**
+
+```java
+public class MySessionActivationListener implements HttpSessionActivationListener, Serializable {
+@Override
+public void sessionWillPassivate(HttpSessionEvent se) {
+    System.out.println(se.getSession().hashCode()+"即将钝化");
+}
+@Override
+public void sessionDidActivate(HttpSessionEvent se) {
+    System.out.println(se.getSession().hashCode()+"已经活化");
+}
+}
+```
+
+
+
+
+**LoginController登录时绑定监听器**
+
+```java
+ @WebServlet("/loginController.do")
+public class LoginController extends HttpServlet {
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String username = req.getParameter("user");
+        String pwd = req.getParameter("pwd");
+        // user
+        User user =new User(username,pwd);
+        // session
+        HttpSession session = req.getSession();
+        session.setAttribute("user", user);
+        // 绑定监听器
+        session.setAttribute("listener", new MySessionActivationListener());
+    }
+}
+```
+
+
+
+重启项目 重复测试即可
+
+![image-20210808161834961](https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210808161851.png)
+
+![image-20210808161823274](https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210808161855.png)
+
+
+
