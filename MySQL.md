@@ -1666,3 +1666,4 @@ select * from myview04;
   结果：
 
   ![image-20210703191518417](https://gitee.com/TeaSea33/typora-picgo/raw/master/img/20210703191518.png)
+
